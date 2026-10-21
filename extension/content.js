@@ -34,13 +34,18 @@
 			.ytdownloader-button:focus-visible { outline: 2px solid #3ea6ff; outline-offset: 2px; }
 			.ytdownloader-button svg { width: 18px; height: 18px; flex: none; }
 			.ytdownloader-button svg path { stroke: #ff4e45; }
+			.ytdownloader-button.ytdownloader-short-button { width: 48px; height: 48px; min-width: 48px; margin: 8px 0; padding: 0; border-radius: 50%; background: rgba(40, 40, 40, .9); }
 			@media (prefers-reduced-motion: reduce) { .ytdownloader-button { transition: none; } }
 		`;
 		document.head.appendChild(style);
 	}
 
 	function addDownloadButton() {
-		const actions = document.querySelector("#top-level-buttons-computed");
+		const isShort = location.pathname.startsWith("/shorts/");
+		const reelActions = isShort && document.querySelector("reel-action-bar-view-model");
+		const actions = isShort
+			? reelActions?.querySelector(".ytwReelActionBarViewModelHostDesktop") || reelActions
+			: document.querySelector("#top-level-buttons-computed");
 		if (!actions || actions.querySelector(".ytdownloader-button")) return;
 
 		addStyles();
@@ -48,7 +53,10 @@
 		button.className = "ytdownloader-button";
 		button.type = "button";
 		button.setAttribute("aria-label", "Скачать через YTDownloader");
-		button.innerHTML = `<span>yt-Dlp</span>`;
+		button.innerHTML = isShort
+			? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 17v4h14v-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+			: `<span>yt-Dlp</span>`;
+		if (isShort) button.classList.add("ytdownloader-short-button");
 		button.title = "Открыть в YTDownloader";
 		button.addEventListener("click", () => {
 			const link = `ytdownloader://add?url=${encodeURIComponent(location.href)}`;
