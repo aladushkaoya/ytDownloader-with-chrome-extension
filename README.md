@@ -221,4 +221,5 @@ in the app.
 
 To install the Chrome extension, open `chrome://extensions`, enable **Developer mode**,
 choose **Load unpacked**, and select this repository's `extension` folder. On a YouTube
-video page, click **Скачать** and allow Chrome to open YTDownloader when prompted.
+video page, click **yt-Dlp** in the action row and allow Chrome to open YTDownloader
+when prompted.
