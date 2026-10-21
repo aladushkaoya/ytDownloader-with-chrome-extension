@@ -212,3 +212,13 @@ npx electron-builder -l appimage
 ```
 
 It will just create a linux appimage build.
+
+## Browser integration
+
+Install the desktop app to register the `ytdownloader://` protocol. Links in the form
+`ytdownloader://add?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D...` open that video
+in the app.
+
+To install the Chrome extension, open `chrome://extensions`, enable **Developer mode**,
+choose **Load unpacked**, and select this repository's `extension` folder. On a YouTube
+video page, click **Скачать** and allow Chrome to open YTDownloader when prompted.

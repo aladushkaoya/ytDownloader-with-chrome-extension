@@ -1,0 +1,12 @@
+{
+	"manifest_version": 3,
+	"name": "YTDownloader",
+	"version": "1.0.0",
+	"description": "Открывает текущее видео YouTube в YTDownloader",
+	"content_scripts": [
+		{
+			"matches": ["https://www.youtube.com/*"],
+			"js": ["content.js"]
+		}
+	]
+}

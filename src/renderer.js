@@ -1391,6 +1391,20 @@ class YtDownloaderApp {
 	 * Attaches all necessary event listeners for the UI.
 	 */
 	_addEventListeners() {
+		ipcRenderer.on("protocol-url", (_event, value) => {
+			try {
+				const link = new URL(value);
+				if (link.protocol !== "ytdownloader:" || link.hostname !== "add") return;
+				const url = link.searchParams.get("url");
+				if (url) {
+					this._switchHomeMode("single");
+					this.getInfo(url);
+				}
+			} catch (error) {
+				console.error("Invalid YTDownloader protocol URL", error);
+			}
+		});
+
 		$(CONSTANTS.DOM_IDS.PASTE_URL_BTN)?.addEventListener("click", () =>
 			this.pasteAndGetInfo(),
 		);
@@ -4536,12 +4550,15 @@ class YtDownloaderApp {
 	}
 
 	validateUrl(rawUrl) {
-		const input = String(rawUrl ?? "").trim();
+		const input = String(rawUrl ?? "").trim().replace(/^URL:\s*/i, "");
 
 		let parsed;
 		try {
 			parsed = new URL(input);
 		} catch {
+			throw new Error("invalidUrl");
+		}
+		if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
 			throw new Error("invalidUrl");
 		}
 

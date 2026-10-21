@@ -50,16 +50,32 @@ const appState = {
 	autoUpdateEnabled: false,
 	isManualUpdateCheck: false,
 	updateChannel: "stable",
+	pendingProtocolUrl: null,
 	/** @type {string | null} Currently registered global hotkey accelerator */
 	registeredHotkeyAccelerator: null,
 };
 
 const gotTheLock = isTestEnv ? true : app.requestSingleInstanceLock();
 
+if (process.platform === "win32" || process.platform === "linux") {
+	app.setAsDefaultProtocolClient("ytdownloader");
+}
+
+app.on("open-url", (event, url) => {
+	event.preventDefault();
+	appState.pendingProtocolUrl = url;
+	sendProtocolUrl(url);
+});
+
 if (!gotTheLock) {
 	app.quit();
 } else {
-	app.on("second-instance", () => {
+	app.on("second-instance", (_event, commandLine) => {
+		const protocolUrl = commandLine.find((arg) => arg.startsWith("ytdownloader://"));
+		if (protocolUrl) {
+			appState.pendingProtocolUrl = protocolUrl;
+			sendProtocolUrl(protocolUrl);
+		}
 		if (appState.mainWindow && !isTestEnv) {
 			if (appState.mainWindow.isMinimized())
 				appState.mainWindow.restore();
@@ -72,6 +88,12 @@ if (!gotTheLock) {
 
 app.whenReady().then(async () => {
 	await initialize();
+	if (process.platform === "darwin") app.setAsDefaultProtocolClient("ytdownloader");
+	const protocolUrl = process.argv.find((arg) => arg.startsWith("ytdownloader://"));
+	if (protocolUrl) {
+		appState.pendingProtocolUrl = protocolUrl;
+		sendProtocolUrl(protocolUrl);
+	}
 
 	app.on("activate", () => {
 		if (BrowserWindow.getAllWindows().length === 0) {
@@ -109,6 +131,18 @@ async function initialize() {
 	}
 }
 
+function sendProtocolUrl(url) {
+	if (!appState.mainWindow || appState.mainWindow.isDestroyed()) return;
+	if (appState.mainWindow.webContents.isLoadingMainFrame()) {
+		appState.pendingProtocolUrl = url;
+		return;
+	}
+	appState.mainWindow.show();
+	appState.mainWindow.focus();
+	appState.mainWindow.webContents.send("protocol-url", url);
+	appState.pendingProtocolUrl = null;
+}
+
 function createWindow() {
 	const bounds = appState.config.bounds || {};
 
@@ -134,6 +168,9 @@ function createWindow() {
 	});
 
 	appState.mainWindow.loadFile("html/index.html");
+	appState.mainWindow.webContents.once("did-finish-load", () => {
+		if (appState.pendingProtocolUrl) sendProtocolUrl(appState.pendingProtocolUrl);
+	});
 
 	appState.mainWindow.once("ready-to-show", () => {
 		if (!isTestEnv) {
